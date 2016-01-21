@@ -21,8 +21,8 @@ AS=gcc -c
 CC=gcc
 CFLAGS=-Wall -c -I. -ggdb
 
-%.o: %.S
-	$(AS) $*.S
+%.o: %.s
+	$(AS) $*.s
 
 %.o: %.c
 	$(CC) $(CFLAGS) $*.c
