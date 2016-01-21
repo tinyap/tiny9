@@ -25,7 +25,7 @@
 #define NEEDSWAPCONTEXT
 #endif
 
-#if defined(__linux__) && defined(__arm__)
+#if defined(__arm__)
 #define NEEDSWAPCONTEXT
 #define NEEDARMMAKECONTEXT
 #endif
@@ -127,11 +127,13 @@ makecontext(ucontext_t *uc, void (*fn)(void), int argc, ...)
 #endif
 
 #ifdef NEEDSWAPCONTEXT
+
 int
 swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 {
 	if(getcontext(oucp) == 0)
 		setcontext(ucp);
+
 	return 0;
 }
 #endif

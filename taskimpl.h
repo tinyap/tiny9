@@ -24,21 +24,16 @@
 #endif
 #endif
 
+#if defined(__APPLE__) || defined(__OpenBSD__) || defined(__linux__)
+#include "taskimplunix.h"
+#endif
+
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
 #include <time.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sched.h>
-#include <signal.h>
-#if USE_UCONTEXT
-#include <ucontext.h>
-#endif
-#include <sys/utsname.h>
 #include <inttypes.h>
 #include "task.h"
 
@@ -59,6 +54,7 @@ typedef unsigned short ushort;
 typedef unsigned long long uvlong;
 typedef long long vlong;
 
+#ifdef UNIX
 #define print task_print
 #define fprint task_fprint
 #define snprint task_snprint
@@ -68,6 +64,7 @@ typedef long long vlong;
 #define vsnprint task_vsnprint
 #define vseprint task_vseprint
 #define strecpy task_strecpy
+#endif
 
 int print(char*, ...);
 int fprint(int, char*, ...);
@@ -124,6 +121,17 @@ extern pid_t rfork_thread(int, void*, int(*)(void*), void*);
 #endif
 
 #if defined(__arm__)
+
+#if !defined(__linux__)
+#	include "arm-ucontext.h"
+extern	int		getmcontext(mcontext_t*);
+extern	void		setmcontext(const mcontext_t*);
+#define	setcontext(u)	setmcontext(&(u)->uc_mcontext)
+#define	getcontext(u)	getmcontext(&(u)->uc_mcontext)
+extern	int		swapcontext(ucontext_t*, const ucontext_t*);
+extern	void		makecontext(ucontext_t*, void(*)(), int, ...);
+#endif
+
 int getmcontext(mcontext_t*);
 void setmcontext(const mcontext_t*);
 #define	setcontext(u)	setmcontext(&(u)->uc_mcontext)
@@ -170,6 +178,8 @@ struct Task
 	void	(*startfn)(void*);
 	void	*startarg;
 	void	*udata;
+
+	ulong	*flag;
 };
 
 void	taskready(Task*);

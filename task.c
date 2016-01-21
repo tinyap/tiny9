@@ -2,7 +2,7 @@
 
 #include "taskimpl.h"
 #include <fcntl.h>
-#include <stdio.h>
+//#include <stdio.h>
 
 int	taskdebuglevel;
 int	taskcount;
@@ -16,22 +16,28 @@ Tasklist	taskrunqueue;
 Task	**alltask;
 int		nalltask;
 
+#ifdef UNIX
 static char *argv0;
+#endif
 static	void		contextswitch(Context *from, Context *to);
 
-static void
+void
 taskdebug(char *fmt, ...)
 {
+#if 0
+
 	va_list arg;
-	char buf[128];
+/*	char buf[128];
 	Task *t;
 	char *p;
 	static int fd = -1;
-
-return;
+*/
 	va_start(arg, fmt);
 	vfprint(1, fmt, arg);
+	fprint(1, "\n");
 	va_end(arg);
+
+/*
 return;
 
 	if(fd < 0){
@@ -53,6 +59,9 @@ return;
 		fprint(fd, "%d.%d: %s\n", getpid(), t->id, buf);
 	else
 		fprint(fd, "%d._: %s\n", getpid(), buf);
+
+*/
+#endif
 }
 
 static void
@@ -79,7 +88,9 @@ static Task*
 taskalloc(void (*fn)(void*), void *arg, uint stack)
 {
 	Task *t;
+#ifdef  UNIX
 	sigset_t zero;
+#endif
 	uint x, y;
 	ulong z;
 
@@ -98,8 +109,10 @@ taskalloc(void (*fn)(void*), void *arg, uint stack)
 
 	/* do a reasonable initialization */
 	memset(&t->context.uc, 0, sizeof t->context.uc);
+#ifdef UNIX
 	sigemptyset(&zero);
 	sigprocmask(SIG_BLOCK, &zero, &t->context.uc.uc_sigmask);
+#endif
 
 	/* must initialize with current context */
 	if(getcontext(&t->context.uc) < 0){
@@ -143,7 +156,8 @@ taskcreate(void (*fn)(void*), void *arg, uint stack)
 	taskcount++;
 	id = t->id;
 	if(nalltask%64 == 0){
-		alltask = realloc(alltask, (nalltask+64)*sizeof(alltask[0]));
+		alltask = malloc((nalltask+64)*sizeof(alltask[0]));
+
 		if(alltask == nil){
 			fprint(2, "out of memory\n");
 			abort();
@@ -240,7 +254,6 @@ taskscheduler(void)
 		tasknswitch++;
 		taskdebug("run %d (%s)", t->id, t->name);
 		contextswitch(&taskschedcontext, &t->context);
-//print("back in scheduler\n");
 		taskrunning = nil;
 		if(t->exiting){
 			if(!t->system)
@@ -312,7 +325,7 @@ needstack(int n)
 	}
 }
 
-static void
+void
 taskinfo(int s)
 {
 	int i;
@@ -349,6 +362,7 @@ taskmainstart(void *v)
 	taskmain(taskargc, taskargv);
 }
 
+#ifdef UNIX
 int
 main(int argc, char **argv)
 {
@@ -367,14 +381,29 @@ main(int argc, char **argv)
 	taskargc = argc;
 	taskargv = argv;
 
-	if(mainstacksize == 0)
+	if(mainstacksize == 0){
 		mainstacksize = 256*1024;
+	}
 	taskcreate(taskmainstart, nil, mainstacksize);
 	taskscheduler();
 	fprint(2, "taskscheduler returned in main!\n");
 	abort();
 	return 0;
 }
+#else
+int
+main()
+{
+//	argv0 = nil;
+	taskargc = 0;
+	taskargv = nil;
+
+	if(mainstacksize == 0)
+		mainstacksize = 5*1024;
+	taskcreate(taskmainstart, nil, mainstacksize);
+	taskscheduler();
+}
+#endif
 
 /*
  * hooray for linked lists

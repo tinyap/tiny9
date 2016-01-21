@@ -28,8 +28,14 @@
 #endif
 #endif
 
-#if defined(__linux__) && defined(__arm__)
+#if defined(__arm__)
+
+#if defined(__linux__)
 #define NEEDARMCONTEXT 1
+#else
+#define NEEDARMM0CONTEXT 1
+#endif
+
 #define SET setmcontext
 #define GET getmcontext
 #endif
@@ -263,6 +269,62 @@ SET:
 	ldr	r14, [r0,#56]
 	ldr	r0, [r0]
 	mov	pc, lr
+#endif
+
+#ifdef NEEDARMM0CONTEXT
+
+/* This works with arm-none-eabi-gcc */
+
+.cpu cortex-m0
+.arch  armv6-m
+.thumb
+
+.globl GET
+GET:
+	add r0, #4
+	stmia r0!, {r1-r7}
+	mov r1, r8
+	mov r2, r9
+	mov r3, r10
+	stmia r0!, {r1-r3}
+	mov r1, r11
+	mov r2, r12
+	mov r3, r13
+	stmia r0!, {r1-r3}
+	mov r1, r14
+	str r1, [r0]
+
+	/* store 1 as r0-to-restore */
+	mov r1, #1
+	sub r0, #56
+	str r1, [r0]
+/*	str r1, [r0, #-56]*/
+
+	/* return 0 */
+	mov	r0, #0
+	mov pc, lr
+
+.globl SET
+SET:
+	add r0, #4
+
+	ldmia r0!, {r1-r7}
+	ldmia r0!, {r1-r3}
+	mov r8, r1
+	mov r9, r2
+	mov r10, r3
+	ldmia r0!, {r1-r3}
+	mov r11, r1
+	mov r12, r2
+	mov r13, r3
+	ldr r1, [r0]
+	mov r14, r1	/* lr */
+
+	sub r0, #56
+	ldr r0, [r0]
+
+	mov pc, lr
+
 #endif
 
 #ifdef NEEDMIPSCONTEXT
