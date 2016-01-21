@@ -28,14 +28,15 @@
 #endif
 #endif
 
-#if defined(__arm__)
 
-#if defined(__linux__)
+#if defined(__arm__) && defined(__linux__)
 #define NEEDARMCONTEXT 1
-#else
-#define NEEDARMM0CONTEXT 1
+#define SET setmcontext
+#define GET getmcontext
 #endif
 
+#if defined(__ARM_ARCH_6M__)
+#define NEEDARM6MCONTEXT 1
 #define SET setmcontext
 #define GET getmcontext
 #endif
@@ -271,11 +272,9 @@ SET:
 	mov	pc, lr
 #endif
 
-#ifdef NEEDARMM0CONTEXT
+#ifdef NEEDARM6MCONTEXT
 
-/* This works with arm-none-eabi-gcc */
-
-.cpu cortex-m0
+/*.cpu cortex-m0*/
 .arch  armv6-m
 .thumb
 
