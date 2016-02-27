@@ -347,7 +347,7 @@ channbsendp(Channel *c, void *v)
 void*
 channbrecvp(Channel *c)
 {
-	void *v;
+	void *v = nil;
 
 	_chanop(c, CHANRCV, (void*)&v, 0);
 	return v;
@@ -377,7 +377,7 @@ channbsendul(Channel *c, ulong val)
 ulong
 channbrecvul(Channel *c)
 {
-	ulong val;
+	ulong val = 0;
 
 	_chanop(c, CHANRCV, &val, 0);
 	return val;
