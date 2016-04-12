@@ -27,6 +27,13 @@ THE SOFTWARE.
 #include	<libc.h>
 #include	<bio.h>
 
+#include	<stdio.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<fcntl.h>
+
+static int	p9create(char *path, int mode, ulong perm);
+
 enum
 {
 	MAXBUFS	= 20
@@ -154,7 +161,7 @@ Bopen(char *name, int mode)
 		break;
 
 	case OWRITE:
-		f = create(name, OWRITE|OTRUNC, 0666);
+		f = p9create(name, OWRITE|OTRUNC, 0666);
 		if(f < 0)
 			return 0;
 	}
@@ -176,4 +183,54 @@ Bterm(Biobuf *bp)
 		free(bp);
 	}
 	return 0;
+}
+
+static int
+p9create(char *path, int mode, ulong perm)
+{
+	int fd, umode, rclose;
+
+	rclose = mode&ORCLOSE;
+	mode &= ~ORCLOSE;
+
+	/* XXX should get mode mask right? */
+	fd = -1;
+	if(perm&DMDIR){
+		if(mode != OREAD){
+//		TODO
+//			werrstr("bad mode in directory create");
+			goto out;
+		}
+		if(mkdir(path, perm&0777) < 0)
+			goto out;
+		fd = open(path, O_RDONLY);
+	}else{
+		umode = (mode&3)|O_CREAT|O_TRUNC;
+		mode &= ~(3|OTRUNC);
+		if(mode&ODIRECT){
+			umode |= O_DIRECT;
+			mode &= ~ODIRECT;
+		}
+		if(mode&OEXCL){
+			umode |= O_EXCL;
+			mode &= ~OEXCL;
+		}
+		if(mode&OAPPEND){
+			umode |= O_APPEND;
+			mode &= ~OAPPEND;
+		}
+		if(mode){
+//	TODO:
+//			werrstr("unsupported mode in create");
+			goto out;
+		}
+//		umode |= O_BINARY;
+		fd = open(path, umode, perm);
+	}
+out:
+	if(fd >= 0){
+		if(rclose)
+			remove(path);
+	}
+	return fd;
 }

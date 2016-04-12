@@ -1,5 +1,6 @@
 /*
-http://code.google.com/p/inferno-os/source/browse/libbio/bflush.c
+Inferno lib9/strecpy.c
+http://code.google.com/p/inferno-os/source/browse/lib9/strecpy.c
 
 	Copyright © 1994-1999 Lucent Technologies Inc.  All rights reserved.
 	Revisions Copyright © 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com).  All rights reserved.
@@ -23,38 +24,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include	<u.h>
-#include	<libc.h>
-#include	<bio.h>
-#include	<unistd.h>
+#include <u.h>
+#include <libc.h>
 
-int
-Bflush(Biobuf *bp)
+char*
+strecpy(char *to, char *e, char *from)
 {
-	int n, c;
-
-	switch(bp->state) {
-	case Bwactive:
-		n = bp->bsize+bp->ocount;
-		if(n == 0)
-			return 0;
-		c = write(bp->fid, bp->bbuf, n);
-		if(n == c) {
-			bp->offset += n;
-			bp->ocount = -bp->bsize;
-			return 0;
-		}
-		bp->state = Binactive;
-		bp->ocount = 0;
-		break;
-
-	case Bracteof:
-		bp->state = Bractive;
-
-	case Bractive:
-		bp->icount = 0;
-		bp->gbuf = bp->ebuf;
-		return 0;
+	if(to >= e)
+		return to;
+	to = memccpy(to, from, '\0', e - to);
+	if(to == nil){
+		to = e - 1;
+		*to = '\0';
+	}else{
+		to--;
 	}
-	return Beof;
+	return to;
 }

@@ -25,7 +25,10 @@ THE SOFTWARE.
 
 #include	<u.h>
 #include	<libc.h>
-#include <bio.h>
+#include	<bio.h>
+
+double	fmtcharstod(int(*f)(void*), void *vp);
+double	__fmtpow10(int n);
 
 struct	bgetd
 {
