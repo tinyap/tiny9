@@ -25,7 +25,7 @@
 #define NEEDSWAPCONTEXT
 #endif
 
-#if defined(__arm__)
+#if defined(__arm__) && !defined(__linux__)
 #define NEEDSWAPCONTEXT
 #define NEEDARMMAKECONTEXT
 #endif

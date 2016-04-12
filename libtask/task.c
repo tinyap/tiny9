@@ -16,7 +16,7 @@ Tasklist	taskrunqueue;
 Task	**alltask;
 int		nalltask;
 
-#ifdef UNIX
+#ifdef TASKUNIX
 static char *argv0;
 #endif
 static	void		contextswitch(Context *from, Context *to);
@@ -88,7 +88,7 @@ static Task*
 taskalloc(void (*fn)(void*), void *arg, uint stack)
 {
 	Task *t;
-#ifdef  UNIX
+#ifdef  TASKUNIX
 	sigset_t zero;
 #endif
 	uint x, y;
@@ -109,7 +109,7 @@ taskalloc(void (*fn)(void*), void *arg, uint stack)
 
 	/* do a reasonable initialization */
 	memset(&t->context.uc, 0, sizeof t->context.uc);
-#ifdef UNIX
+#ifdef TASKUNIX
 	sigemptyset(&zero);
 	sigprocmask(SIG_BLOCK, &zero, &t->context.uc.uc_sigmask);
 #endif
@@ -362,7 +362,7 @@ taskmainstart(void *v)
 	taskmain(taskargc, taskargv);
 }
 
-#ifdef UNIX
+#ifdef TASKUNIX
 int
 main(int argc, char **argv)
 {

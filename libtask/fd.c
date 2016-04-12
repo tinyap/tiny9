@@ -43,6 +43,7 @@ fdtask(void *v)
 			else
 				ms = 5000;
 		}
+//print("sleeping %dms\n", ms);
 		if(poll(pollfd, npollfd, ms) < 0){
 			if(errno == EINTR)
 				continue;

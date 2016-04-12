@@ -33,9 +33,7 @@
 #define NEEDARMCONTEXT 1
 #define SET setmcontext
 #define GET getmcontext
-#endif
-
-#if defined(__ARM_ARCH_6M__)
+#elif defined(__ARM_ARCH_6M__)
 #define NEEDARM6MCONTEXT 1
 #define SET setmcontext
 #define GET getmcontext

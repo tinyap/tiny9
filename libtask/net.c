@@ -3,41 +3,76 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <sys/un.h>
 #include <netinet/tcp.h>
 #include <sys/poll.h>
 
 int
-netannounce(int istcp, char *server, int port)
+netannounce(int network, char *server, int port)
 {
-	int fd, n, proto;
-	struct sockaddr_in sa;
+	int fd, n, proto, net, sasz;
+	struct sockaddr_in sin;
+	struct sockaddr_un sun;
+	struct sockaddr *sa;
 	socklen_t sn;
 	uint32_t ip;
 
 	taskstate("netannounce");
-	proto = istcp ? SOCK_STREAM : SOCK_DGRAM;
-	memset(&sa, 0, sizeof sa);
-	sa.sin_family = AF_INET;
-	if(server != nil && strcmp(server, "*") != 0){
-		if(netlookup(server, &ip) < 0){
-			taskstate("netlookup failed");
-			return -1;
-		}
-		memmove(&sa.sin_addr, &ip, 4);
+	
+	switch(network){
+	case TCP:
+	case UNIX:
+		proto = SOCK_STREAM;
+		break;
+	case UDP:
+		proto = SOCK_DGRAM;
+		break;
+	default:
+		return -1;
 	}
-	sa.sin_port = htons(port);
-	if((fd = socket(AF_INET, proto, 0)) < 0){
+
+	switch(network){
+	case TCP:
+	case UDP:
+		memset(&sin, 0, sizeof sin);
+
+		sin.sin_family = AF_INET;
+		if(server != nil && strcmp(server, "*") != 0){
+			if(netlookup(server, &ip) < 0){
+				taskstate("netlookup failed");
+				return -1;
+			}
+			memmove(&sin.sin_addr, &ip, 4);
+		}
+		sin.sin_port = htons(port);
+		sa = (struct sockaddr*)&sin;
+		sasz = sizeof sin;
+		net = AF_INET;
+		break;
+	case UNIX:
+		memset(&sun, 0, sizeof sun);
+		sun.sun_family = AF_UNIX;
+		strncpy(sun.sun_path, server, sizeof(sun.sun_path)-1);
+		sa = (struct sockaddr*)&sun;
+		sasz = sizeof sun;
+		net = AF_UNIX;
+		break;
+	default:
+		return -1;
+	}
+
+	if((fd = socket(net, proto, 0)) < 0){
 		taskstate("socket failed");
 		return -1;
 	}
-	
+
 	/* set reuse flag for tcp */
-	if(istcp && getsockopt(fd, SOL_SOCKET, SO_TYPE, (void*)&n, &sn) >= 0){
+	if(network == TCP && getsockopt(fd, SOL_SOCKET, SO_TYPE, (void*)&n, &sn) >= 0){
 		n = 1;
 		setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&n, sizeof n);
 	}
 
-	if(bind(fd, (struct sockaddr*)&sa, sizeof sa) < 0){
+	if(bind(fd, sa, sasz) < 0){
 		taskstate("bind failed");
 		close(fd);
 		return -1;

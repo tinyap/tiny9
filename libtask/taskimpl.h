@@ -54,7 +54,7 @@ typedef unsigned short ushort;
 typedef unsigned long long uvlong;
 typedef long long vlong;
 
-#ifdef UNIX
+#ifdef TASKUNIX
 #define print task_print
 #define fprint task_fprint
 #define snprint task_snprint
@@ -121,7 +121,6 @@ extern pid_t rfork_thread(int, void*, int(*)(void*), void*);
 #endif
 
 #if defined(__arm__)
-
 #if !defined(__linux__)
 #	include "arm-ucontext.h"
 extern	int		getmcontext(mcontext_t*);
