@@ -5,9 +5,9 @@
 #define	offsetof(s, m)	(ulong)(&(((s*)0)->m))
 #endif
 
-#define	nrow		nelem
-#define	ncol(x)	nelem(x[0])
-#define	elemsz(x)	sizeof(x[0][0])
+#define	nrow2		nelem
+#define	ncol2(x)		nelem(x[0])
+#define	elemsz2(x)	sizeof(x[0][0])
 
 /* From $PLAN9/src/cmd/fossil/pack.c */
 #define	U8GET(p)	((p)[0])
